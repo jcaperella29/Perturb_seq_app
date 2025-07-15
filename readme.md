@@ -1,10 +1,32 @@
 # JCAP CRISPR Mixscape Pipeline
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![R](https://img.shields.io/badge/R-%3E=4.2.0-blue.svg)](https://cran.r-project.org/)
+[![shiny](https://img.shields.io/badge/Shiny-App-orange.svg)](https://shiny.posit.co/)
+[![issues](https://img.shields.io/github/issues/jcaperella29/Perturb_seq_app)](https://github.com/jcaperella29/Perturb_seq_app/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/jcaperella29/Perturb_seq_app)](https://github.com/jcaperella29/Perturb_seq_app/commits/main)
 
-Welcome to the **JCAP CRISPR Mixscape Pipeline**, a user-friendly Shiny application for interactive single-cell CRISPR analysis using the [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) workflow (Seurat). This app enables wet-lab biologists and computational researchers to analyze CRISPR perturbation screens with visual and statistical clarity.
+
+Welcome to the **JCAP CRISPR Mixscape Pipeline**, a user-friendly Shiny application for interactive single-cell CRISPR analysis using the Mixscape workflow from [Seurat](https://satijalab.org/seurat/articles/mixscape_vignette.html).
 
 ---
 
-## 🌱 Features
+## 📁 Repository Structure
+
+Perturb_seq_app/
+│
+├── CRISPR_APP/ # Main Shiny app code
+│ └── (app.R, custom.css, How_To.txt, etc.)
+│
+├── sample_data/ # Example input data files
+│ ├── counts_matrix.csv
+│ └── metadata.csv
+│
+└── readme.md
+
+
+---
+
+## 🌟 Features
 
 - **Upload your own count matrix and metadata**
 - **Automated QC, normalization, HVG selection**
@@ -14,52 +36,52 @@ Welcome to the **JCAP CRISPR Mixscape Pipeline**, a user-friendly Shiny applicat
 - **Interactive plots (barplots, violin plots, heatmaps, etc)**
 - **Downloadable differential gene expression (KO vs NT) tables**
 - **Summary statistics for your dataset**
-- **Responsive design, with soft pastel CSS inspired by _Les Carnets de l’Apothicaire_**
+- **Downloadable summary table**
+- **In-app How To guide and pastel garden CSS theme**
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Install R dependencies
+### 1. Install R and dependencies
 
 ```r
 # In R/RStudio, run:
 install.packages(c("shiny", "Seurat", "dplyr", "ggplot2", "patchwork", "plotly", "DT"))
-# For most, CRAN is fine. If you use advanced Seurat features, consider Bioconductor.
+
 2. Clone this repository
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/jcap-crispr-mixscape.git
-cd jcap-crispr-mixscape
-3. Run the app
-r
-Copy
-Edit
-shiny::runApp()   # or specify the path if outside the directory
+ in bash
+git clone https://github.com/jcaperella29/Perturb_seq_app.git
+cd Perturb_seq_app
+
+3. Launch the App
+in r/r studio console run
+
+shiny::runApp("CRISPR_APP")
+
 📂 Input Data Format
 Counts matrix: CSV, cells as columns, genes as rows.
 
 Metadata: CSV, one row per cell, with required columns: gene, replicate, guide_ID, etc.
 
-Example files are provided in the example_data/ folder.
+Example data: See sample_data/ for ready-to-use demo files.
 
 🖱️ Using the App
-Upload your count matrix and metadata CSVs.
+Upload the sample or your own counts and metadata CSVs.
 
-Click Run Normalization & UMAP to process the data.
+Click Run Normalization & UMAP to process.
 
-Adjust number of neighbors if desired.
+Adjust Number of Neighbors if desired.
 
 Click Run Mixscape Analysis.
 
-Explore the results in the different tabs:
+Explore results in tabs:
 
 UMAP Plots
 
 Summary Table
 
-KO Genes Table (downloadable)
+KO Genes (downloadable)
 
 KO % Barplots
 
@@ -69,32 +91,41 @@ Posterior Violin
 
 Heatmap
 
-How To instructions
+How To
 
-Download gene tables and summary stats as needed.
+Download tables as needed!
 
-For detailed step-by-step instructions, see the How To tab inside the app.
+See the "How To" tab or How_To.txt for step-by-step instructions.
 
 📊 Example Data
-You’ll find example data in example_data/ to help you get started.
-Note: For real Mixscape results (KO/NP/NT separation, DGE, etc.), use a dataset with at least ~100 cells per group and >500 variable genes.
+sample_data/counts_matrix.csv
+sample_data/metadata.csv
+
+These files are small demo sets so you can test the full app without needing a large CRISPR dataset.
 
 🎨 Customization
-Theme/CSS: The app features a pastel garden theme (see www/custom.css).
+Theme: Custom CSS (CRISPR_APP/www/custom.css) inspired by Les Carnets de l’Apothicaire.
 
-Modular Code: Feel free to fork and adapt for your own CRISPR or single-cell workflows!
+Modular: Edit code in CRISPR_APP/app.R for your own needs!
 
-📖 Documentation
-See How_To.txt or the in-app “How To” tab for a walkthrough of all features.
+🛟 Support & Issues
+If you have problems, please open an issue.
 
 🙏 Credits
-Original method: Seurat Mixscape vignette
+Seurat Mixscape: Satija Lab
 
-UI inspiration: Les Carnets de l’Apothicaire (Lumen editions art)
+UI Art Inspiration: Les Carnets de l’Apothicaire
 
-App author: Your Name Here
+Author: @jcaperella29
 
-Contributors: Open to pull requests!
+📄 License
+MIT License.
 
-🛟 Support
-Open a GitHub Issue for bugs or feature requests
+Enjoy your CRISPR screens and happy data exploring! 🌸
+
+
+
+
+
+
+

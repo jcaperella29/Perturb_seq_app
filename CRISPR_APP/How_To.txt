@@ -1,0 +1,39 @@
+# How to Use the JCAP CRISPR Mixscape Pipeline App
+
+1. **Upload Your Data**
+   - Use the sidebar to upload your counts matrix (.csv) and metadata (.csv).
+
+2. **Run Basic Analysis**
+   - Click the **Run Normalization & UMAP** button to process your data and see the UMAP plots.
+
+3. **View Summary Table**
+   - Once the basic analysis is complete, click **Show Summary Stats** to see a summary table of cell, gene, and group counts.
+
+4. **Adjust Parameters (Optional)**
+   - If desired, adjust the "Number of Neighbors" slider to tune downstream analysis.
+
+5. **Run Mixscape Analysis**
+   - Click **Run Mixscape Analysis**. This classifies cells as KO, NP, or NT, and enables downstream differential expression and visualization.
+
+6. **Explore the Results**
+   - Navigate through the tabs to view:
+     - UMAP plots
+     - Summary statistics
+     - KO gene table (differential expression)
+     - KO percentage barplots
+     - Perturbation score plots
+     - Posterior violin plots
+     - Mixscape heatmap
+
+7. **Download Results**
+   - Use the download buttons to export the KO gene table and summary statistics for your records.
+
+---
+
+**Tips:**
+- Make sure your metadata and counts files are formatted correctly. (See example files if unsure.)
+- If you encounter an error, check that each group/replicate has enough cells for Mixscape to run.
+- Some plots may be empty if there is not enough data or if Mixscape cannot classify enough cells.
+- For help, check this How To, or reach out to the app maintainer.
+
+Enjoy your analysis!

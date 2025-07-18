@@ -83,6 +83,57 @@ in r/r studio console run
 
 shiny::runApp("CRISPR_APP")
 
+🚀 HPC Deployment: Singularity + Slurm
+1. Build the Singularity Container
+First, build your container image using the provided singularity.def file:
+
+to do so in bash commmand line while in the CRISPR_APP folder from the repo  run
+sudo singularity build mixscape_all_deps.sif singularity.def
+This will create mixscape_all_deps.sif in your current directory.
+
+
+2. Edit the sbatch Script (if needed)
+Open sbatch.sh with nano or a text editor line notepad and update the paths to match your environment using the bash lines below as a template
+IMAGE=/full/path/to/Perturb_seq_app/CRISPR_APP/mixscape_all_deps.sif
+
+APPDIR=/full/path/to/Perturb_seq_app/CRISPR_APP
+
+Also set the memory/CPU/partition as needed for your cluster.
+
+3. Submit the Job with Slurm
+use the following bash command while in the CRISPR_APP folder
+sbatch sbatch.sh
+
+This will launch your Shiny app in the background.
+
+4. Access the App
+
+When your job starts, check the log output for the compute node name (e.g., localhost or a node number). Use the following bash commmand.
+ssh -N -L 3838:<node_name>:3838 your_user@your_hpc
+Then, open http://localhost:3838 in your browser.
+
+5. Troubleshooting
+Check logs  usin the following bash commands:
+
+tail -f perturb-shiny_<jobid>.log
+
+tail -f perturb-shiny_<jobid>.err
+
+If you see R errors about missing packages, rebuild your container after fixing the Singularity definition.
+
+For more help, see the issues section or contact the maintainer.
+
+
+
+
+
+If running remotely, use SSH tunneling to view your app in your web browser:
+
+Happy analyzing! 🧬
+Your bioinformatics Shiny app is now portable and HPC-ready.
+
+
+
 📂 Input Data Format
 Counts matrix: CSV, cells as columns, genes as rows.
 

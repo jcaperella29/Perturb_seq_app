@@ -1,39 +1,46 @@
-# How to Use the JCAP CRISPR Mixscape Pipeline App
 
-1. **Upload Your Data**
-   - Use the sidebar to upload your counts matrix (.csv) and metadata (.csv).
+Perturbation (Safe Posterior) — Explore Mixscape perturbation scores.
 
-2. **Run Basic Analysis**
-   - Click the **Run Normalization & UMAP** button to process your data and see the UMAP plots.
+Posterior Violin — View per-guide distributions of posterior scores.
 
-3. **View Summary Table**
-   - Once the basic analysis is complete, click **Show Summary Stats** to see a summary table of cell, gene, and group counts.
+Heatmap (Safe DE) — Inspect DE genes across groups.
 
-4. **Adjust Parameters (Optional)**
-   - If desired, adjust the "Number of Neighbors" slider to tune downstream analysis.
+Pathway Enrichment Analysis
 
-5. **Run Mixscape Analysis**
-   - Click **Run Mixscape Analysis**. This classifies cells as KO, NP, or NT, and enables downstream differential expression and visualization.
+Use the Pathway Enrichment tab to find biological pathways enriched among your DE genes.
 
-6. **Explore the Results**
-   - Navigate through the tabs to view:
-     - UMAP plots
-     - Summary statistics
-     - KO gene table (differential expression)
-     - KO percentage barplots
-     - Perturbation score plots
-     - Posterior violin plots
-     - Mixscape heatmap
+Choose between g:Profiler (multi-species) or Enrichr (human/mouse-focused).
 
-7. **Download Results**
-   - Use the download buttons to export the KO gene table and summary statistics for your records.
+Click Enrich ALL, Enrich UP, or Enrich DOWN:
 
----
+A notification will appear while enrichment runs.
 
-**Tips:**
-- Make sure your metadata and counts files are formatted correctly. (See example files if unsure.)
-- If you encounter an error, check that each group/replicate has enough cells for Mixscape to run.
-- Some plots may be empty if there is not enough data or if Mixscape cannot classify enough cells.
-- For help, check this How To, or reach out to the app maintainer.
+When complete, you’ll see barplots and tables of significant pathways.
 
-Enjoy your analysis!
+You can also download enrichment results as CSV files for each category.
+
+Download Results
+
+Download KO gene tables, summary stats, and pathway enrichment outputs directly from the app.
+
+File names include timestamps for easy record keeping.
+
+💡 Tips
+
+Ensure metadata matches your counts matrix (same cell IDs and consistent labels).
+
+If Mixscape fails, check that:
+
+Each KO and NT group has enough cells.
+
+Your guide labeling column (e.g., perturbation or mixscape_class_global) is correct.
+
+Enrichment works best when ≥20 DE genes are detected per comparison.
+
+If enrichment results show “No terms returned,” check your species selection and gene naming format.
+
+You’ll now see live notifications whenever enrichment is running or completed.
+
+Enjoy exploring your CRISPR perturbation data!
+
+Maintainer: JCAP Bioinformatics Hub 🧠

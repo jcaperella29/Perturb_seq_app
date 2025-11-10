@@ -2,62 +2,108 @@ Bootstrap: docker
 From: ubuntu:22.04
 
 %help
-    Robust Singularity container for Seurat+Mixscape+Shiny app with ALL dependencies explicitly installed.
+    Minimal, HPC-friendly Apptainer image for Seurat + Mixscape + Shiny.
+    Run (WSL/Linux):
+      apptainer run --bind /mnt/c/Users/jcape/Downloads/Perturb_seq_app/CRISPR_APP:/mnt/app mix_APP.sif
+    Then open http://localhost:3838
 
 %environment
     export LANG=en_US.UTF-8
     export LC_ALL=en_US.UTF-8
+    export DEBIAN_FRONTEND=noninteractive
+    # Overridable at runtime:
+    export APP_PATH=/mnt/app
+    export PORT=3838
 
 %post
-    export DEBIAN_FRONTEND=noninteractive
-    export TZ=Etc/UTC
-    apt-get update && apt-get install -y \
-        gdebi-core wget curl locales sudo ca-certificates build-essential \
-        libssl-dev libcurl4-openssl-dev libxml2-dev libfontconfig1-dev \
-        libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libglpk-dev \
-        libgit2-dev libhdf5-dev libzmq3-dev libharfbuzz-dev libfribidi-dev \
-        libclang-dev libmariadb-dev libblas-dev liblapack-dev pandoc git
+    set -eux
+
+    # ---- Base setup ----
+    ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
+    apt-get update
+    apt-get install -y --no-install-recommends tzdata
+    dpkg-reconfigure -f noninteractive tzdata
+
+    apt-get install -y --no-install-recommends \
+        locales sudo ca-certificates wget curl git gnupg \
+        build-essential pandoc fonts-dejavu-core \
+        libssl-dev libcurl4-openssl-dev libxml2-dev libgit2-dev \
+        libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+        libharfbuzz-dev libfribidi-dev \
+        libblas-dev liblapack-dev libhdf5-dev libglpk-dev libzmq3-dev \
+        libmariadb-dev
 
     locale-gen en_US.UTF-8
-    update-locale LANG=en_US.UTF-8
+    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-    # R setup
-     curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/cran.gpg
-     echo "deb https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" > /etc/apt/sources.list.d/cran.list
+    # ---- R setup (CRAN for jammy) ----
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+      | gpg --dearmor -o /etc/apt/keyrings/cran-archive-keyring.gpg
 
-       apt-get update && apt-get install -y r-base r-base-dev
+    echo "deb [signed-by=/etc/apt/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
+      > /etc/apt/sources.list.d/cran.list
 
-    # Install devtools and all R deps (as above)
-    R -e "install.packages('devtools', repos='https://cloud.r-project.org/')"
-    R -e "install.packages(c(
-      'shiny','ggplot2','dplyr','patchwork','scales','reshape2','mixtools','Seurat','SeuratData','presto',
-      'plotly','DT','markdown',
-      'Matrix','Rcpp','RANN','cowplot','future','ape','digest','sctransform','irlba','httr','rlang','reticulate','data.table','R.utils','gridExtra','pbapply','RCurl','methods','MASS','magrittr','lazyeval','stringr','tidyr','tibble','cli','jsonlite','sp','zoo','fastmatch','matrixStats','SparseM','progressr'
-      ), repos='https://cloud.r-project.org/')"
-    R -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager', repos='https://cloud.r-project.org/')"
-    R -e "BiocManager::install(c(
-      'SingleCellExperiment','SummarizedExperiment','GenomicRanges','IRanges','S4Vectors','GenomeInfoDb','BiocGenerics',
-      'BiocParallel','limma','edgeR','Matrix.utils','DelayedArray','DelayedMatrixStats','batchelor','scuttle','scran'
-      ), ask=FALSE, update=FALSE)"
-    # Ensure all presto dependencies are installed
-    R -e "install.packages(c('Rcpp', 'Matrix', 'methods', 'dplyr', 'tibble', 'cli', 'rlang', 'RcppParallel'), repos='https://cloud.r-project.org/')"
-    R -e "install.packages('devtools', repos='https://cloud.r-project.org/')"
-    R -e "devtools::install_github('immunogenomics/presto')"
-    R -e "devtools::install_github('satijalab/seurat-data')"
+    apt-get update
+    apt-get install -y --no-install-recommends r-base r-base-dev
 
-    R -e "devtools::install_github('satijalab/seurat-wrappers', upgrade='never')"
-    R -e "try(BiocManager::install('mixscape', ask=FALSE, update=FALSE), silent=TRUE)"
-    chmod -R a+rx /usr/local/lib/R/site-library
+# --- R packages (robust; ensures presto is installed) ---
+R -q -e 'options(Ncpus=max(1, parallel::detectCores()-1), timeout=600);
+  repos <- "https://cloud.r-project.org";
+  install.packages(c("remotes","BiocManager"), repos=repos);
+  install.packages(c(
+    "shiny","ggplot2","dplyr","patchwork","scales","reshape2","mixtools","presto",
+    "plotly","DT","markdown","Matrix","Rcpp","RANN","cowplot","future","ape","digest",
+    "sctransform","irlba","httr","rlang","reticulate","data.table","R.utils","gridExtra",
+    "pbapply","RCurl","MASS","magrittr","lazyeval","stringr","tidyr","tibble","cli","jsonlite",
+    "sp","zoo","fastmatch","matrixStats","SparseM","progressr","randomForest","caret","pROC",
+    "RColorBrewer","pwr","enrichR","gprofiler2"
+  ), repos=repos);
+  BiocManager::install(c(
+    "SingleCellExperiment","SummarizedExperiment","GenomicRanges","IRanges","S4Vectors",
+    "GenomeInfoDb","BiocGenerics","BiocParallel","limma","edgeR","Matrix.utils","DelayedArray",
+    "DelayedMatrixStats","batchelor","scuttle","scran"
+  ), ask=FALSE, update=FALSE);
+  install.packages("Seurat", repos=repos);
+  remotes::install_github("satijalab/seurat-data", upgrade="never");
+  remotes::install_github("satijalab/seurat-wrappers", upgrade="never");
+  # Mixscape from GitHub (optional; do not hard-fail on GH flakiness)
+  try(remotes::install_github("satijalab/mixscape", upgrade="never"), silent=TRUE);
 
-    mkdir -p /app
+  # ---------- ENSURE PRESTO IS PRESENT (CRAN first, then GH fallback) ----------
+  if (!requireNamespace("presto", quietly=TRUE)) {
+    message("presto not found after initial installs — trying CRAN again...");
+    install.packages("presto", repos=repos);
+  }
+  if (!requireNamespace("presto", quietly=TRUE)) {
+    message("presto still missing — trying GitHub fallback immunogenomics/presto");
+    if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos=repos);
+    try(remotes::install_github("immunogenomics/presto", upgrade="never"), silent=TRUE);
+  }
+  if (!requireNamespace("presto", quietly=TRUE)) {
+    stop("FATAL: presto failed to install from CRAN and GitHub during image build.");
+  }
+
+  ip <- as.data.frame(installed.packages()[,c("Package","Version")]);
+  cat("Installed presto version: ",
+      ip[ip[["Package"]] == "presto","Version"], "\n");
+'
+
+
+    # Clean up
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
 
 %runscript
-    #!/bin/bash
-    Rscript -e "shiny::runApp('/app', host='0.0.0.0', port=3838, launch.browser=FALSE)"
+    # Launch Shiny app from $APP_PATH (default /mnt/app). Works with app.R OR ui.R/server.R.
+    if [ ! -d "$APP_PATH" ] && [ ! -f "$APP_PATH" ]; then
+        echo "APP_PATH '$APP_PATH' not found."
+        echo "Bind your app dir, e.g.:"
+        echo "  apptainer run --bind /mnt/c/Users/jcape/Downloads/Perturb_seq_app/CRISPR_APP:/mnt/app mix_APP.sif"
+        exit 1
+    fi
+    echo 'Starting Shiny app at '"$APP_PATH"' on port '"${PORT}"'...'
+    exec R -e "shiny::runApp(Sys.getenv('APP_PATH','/mnt/app'), host='0.0.0.0', port=as.integer(Sys.getenv('PORT','3838')))"
 
-%test
-    Rscript -e 'cat("Seurat: ");packageVersion("Seurat"); cat("\nMixscape (SeuratWrappers): ");packageVersion("SeuratWrappers"); cat("\nShiny: ");packageVersion("shiny"); cat("\n")'
-    shiny-server --version
-    echo "Test: Everything installed!"
 
 

@@ -138,13 +138,16 @@ server <- function(input, output, session) {
     # standardize to Term / Adjusted.P.value columns
     adj <- if ("p_adjusted" %in% names(res)) res$p_adjusted else p.adjust(res$p_value, "fdr")
     out <- data.frame(
-      Term = paste0(res$term_name, " (", res$source, ")"),
+      Term   = paste0(res$term_name, " (", res$source, ")"),
       Overlap = paste0(res$intersection_size, "/", res$term_size),
       P.value = res$p_value,
       Adjusted.P.value = adj,
+      Genes  = res$intersection,   # <- comma-separated list of genes in the term
       stringsAsFactors = FALSE, check.names = FALSE
     )
+    
     out[order(out$Adjusted.P.value, out$P.value), , drop = FALSE]
+    
   }
   
   # Enrichr (returns standardized table or NULL)
@@ -167,11 +170,15 @@ server <- function(input, output, session) {
       df
     }))
     if (is.null(tbl) || nrow(tbl) == 0) return(NULL)
-    std <- tbl[, c("Term","Overlap","P.value","Adjusted.P.value","source"), drop = FALSE]
+    std <- tbl[, c("Term","Overlap","P.value","Adjusted.P.value","Genes","source"), drop = FALSE]
+    
     std$Term <- paste0(std$Term, " (", std$source, ")")
     std <- std[order(std$Adjusted.P.value, std$P.value), , drop = FALSE]
     rownames(std) <- NULL
-    std[, c("Term","Overlap","P.value","Adjusted.P.value"), drop = FALSE]
+    
+    # keep Genes in the final table
+    std[, c("Term","Overlap","P.value","Adjusted.P.value","Genes"), drop = FALSE]
+    
   }
   
   # Unified entry point based on species

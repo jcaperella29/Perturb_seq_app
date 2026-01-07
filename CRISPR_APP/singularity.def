@@ -2,92 +2,88 @@ Bootstrap: docker
 From: ubuntu:22.04
 
 %help
-    Robust Singularity container for Seurat+Mixscape+Shiny app with ALL dependencies explicitly installed.
+    Robust Singularity container for Seurat + Mixscape + Shiny app with explicit dependencies.
 
 %environment
     export LANG=en_US.UTF-8
     export LC_ALL=en_US.UTF-8
 
 %post
-    # --- System libs ---
-    apt-get update && apt-get install -y \
-        gdebi-core \
-        wget \
-        curl \
-        locales \
-        sudo \
-        ca-certificates \
-        build-essential \
-        libssl-dev \
-        libcurl4-openssl-dev \
-        libxml2-dev \
-        libfontconfig1-dev \
-        libfreetype6-dev \
-        libpng-dev \
-        libtiff5-dev \
-        libjpeg-dev \
-        libglpk-dev \
-        libgit2-dev \
-        libhdf5-dev \
-        libzmq3-dev \
-        libharfbuzz-dev \
-        libfribidi-dev \
-        libclang-dev \
-        libmariadb-client-lgpl-dev \
-        libblas-dev \
-        liblapack-dev \
-        pandoc \
-        git
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=Etc/UTC
 
-    # Set up locale
+    apt-get update && apt-get install -y --no-install-recommends \
+        gdebi-core wget curl locales ca-certificates build-essential pkg-config \
+        git \
+        libssl-dev libcurl4-openssl-dev libxml2-dev \
+        libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+        libcairo2-dev libxt-dev \
+        libglpk-dev libgit2-dev libhdf5-dev libzmq3-dev \
+        libharfbuzz-dev libfribidi-dev \
+        libclang-dev libmariadb-dev \
+        libblas-dev liblapack-dev \
+        pandoc \
+        gpg \
+        && rm -rf /var/lib/apt/lists/*
+
     locale-gen en_US.UTF-8
     update-locale LANG=en_US.UTF-8
 
-    # --- R setup (from CRAN) ---
-    apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 'E298A3A825C0D65DFD57CBB651716619E084DAB9'
+    # CRAN repo for Ubuntu Jammy
+    curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/cran.gpg
     echo "deb https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" > /etc/apt/sources.list.d/cran.list
-    apt-get update && apt-get install -y r-base r-base-dev
 
-    # --- Shiny server ---
-    wget https://download3.rstudio.org/ubuntu-22.04/x86_64/shiny-server-1.5.20.1304-amd64.deb
-    gdebi -n shiny-server-1.5.20.1304-amd64.deb
-    rm shiny-server-1.5.20.1304-amd64.deb
+    apt-get update && apt-get install -y --no-install-recommends r-base r-base-dev \
+        && rm -rf /var/lib/apt/lists/*
 
-    # --- Install devtools for github ---
-    R -e "install.packages('devtools', repos='https://cloud.r-project.org/')"
+    # Core R tools (use remotes instead of devtools)
+    R -e "install.packages(c('remotes','BiocManager'), repos='https://cloud.r-project.org/', Ncpus=parallel::detectCores())"
 
-    # --- Install CRAN dependencies EXPLICITLY (all direct + indirect) ---
+    # CRAN packages (avoid presto here; we'll install it from GitHub)
     R -e "install.packages(c(
-      'shiny','ggplot2','dplyr','patchwork','scales','reshape2','mixtools','Seurat','SeuratData','presto',
+      'shiny','ggplot2','dplyr','patchwork','scales','reshape2','mixtools',
+      'Seurat','SeuratData',
       'plotly','DT','markdown',
-      'Matrix','Rcpp','RANN','cowplot','future','ape','digest','sctransform','irlba','httr','rlang','reticulate','data.table','R.utils','gridExtra','pbapply','RCurl','methods','MASS','magrittr','lazyeval','stringr','tidyr','tibble','cli','jsonlite','sp','zoo','fastmatch','matrixStats','SparseM','progressr'
-      ), repos='https://cloud.r-project.org/')"
+      'Matrix','Rcpp','RANN','cowplot','future','ape','digest','sctransform','irlba','httr','rlang',
+      'reticulate','data.table','R.utils','gridExtra','pbapply','RCurl','methods','MASS','magrittr',
+      'lazyeval','stringr','tidyr','tibble','cli','jsonlite','sp','zoo','fastmatch','matrixStats',
+      'SparseM','progressr','RcppParallel'
+      ),
+      repos='https://cloud.r-project.org/',
+      Ncpus=parallel::detectCores()
+    )"
 
-    # --- Bioconductor core pkgs for Seurat/Mixscape/SingleCell ---
-    R -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager', repos='https://cloud.r-project.org/')"
+    # Bioconductor packages
     R -e "BiocManager::install(c(
       'SingleCellExperiment','SummarizedExperiment','GenomicRanges','IRanges','S4Vectors','GenomeInfoDb','BiocGenerics',
       'BiocParallel','limma','edgeR','Matrix.utils','DelayedArray','DelayedMatrixStats','batchelor','scuttle','scran'
-      ), ask=FALSE, update=FALSE)"
+      ), ask=FALSE, update=FALSE
+    )"
 
-    # --- Install SeuratData and SeuratWrappers/Mixscape (from github) ---
-    R -e "devtools::install_github('satijalab/seurat-data', upgrade='never')"
-    R -e "devtools::install_github('satijalab/seurat-wrappers', upgrade='never')"
+    # GitHub installs (use remotes)
+    # presto from GitHub (this is what you wanted)
+    R -e "remotes::install_github('immunogenomics/presto', upgrade='never', dependencies=TRUE)"
 
-    # --- If Mixscape Bioconductor version is needed as well, install ---
+    # Seurat ecosystem extras (optional, keep if you use them)
+    R -e "remotes::install_github('satijalab/seurat-wrappers', upgrade='never', dependencies=TRUE)"
+
+    # If you truly need satijalab/seurat-data (not always necessary if SeuratData is enough):
+    # R -e "remotes::install_github('satijalab/seurat-data', upgrade='never', dependencies=TRUE)"
+
+    # Try Mixscape (may be in SeuratWrappers; Bioc install sometimes fails)
     R -e "try(BiocManager::install('mixscape', ask=FALSE, update=FALSE), silent=TRUE)"
 
-    # --- Clean up ---
-    mkdir -p /srv/shiny-server/app
-    chown -R shiny:shiny /srv/shiny-server
+    chmod -R a+rx /usr/local/lib/R/site-library
+    mkdir -p /app
 
 %runscript
-    # Start shiny server
-    exec shiny-server
+    #!/bin/bash
+    exec Rscript -e "shiny::runApp('/app', host='0.0.0.0', port=3838, launch.browser=FALSE)"
 
 %test
-    Rscript -e 'cat("Seurat: ");packageVersion("Seurat"); cat("\nMixscape (SeuratWrappers): ");packageVersion("SeuratWrappers"); cat("\nShiny: ");packageVersion("shiny"); cat("\n")'
-    shiny-server --version
-    echo "Test: Everything installed!"
-
-
+    Rscript -e "cat('Seurat: ', as.character(packageVersion('Seurat')), '\n'); \
+                cat('SeuratWrappers: ', as.character(packageVersion('SeuratWrappers')), '\n'); \
+                cat('Shiny: ', as.character(packageVersion('shiny')), '\n'); \
+                cat('Presto: ', as.character(packageVersion('presto')), '\n')"
+    echo "Test: R packages installed!"
